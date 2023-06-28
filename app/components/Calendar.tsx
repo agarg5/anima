@@ -20,39 +20,42 @@ import EditEventModal from "./EditEventModal";
 const localizer = momentLocalizer(moment);
 const DnDCalendar = withDragAndDrop(ReactBigCalendar);
 
-function Calendar() {
-  const initialResourceId = Date.now().toString();
-  const initialValues: MapOrEntries<string, Event> = [
-    [
-      initialResourceId,
-      {
-        start: moment().toDate(),
-        end: moment().add(1, "days").toDate(),
-        title: "Some title",
-        resource: initialResourceId,
-      },
-    ],
-  ];
-  const [map, actions] = useMap(initialValues);
+type CalendarProps = {
+  events: MapOrEntries<string, Event>;
+  addEvent: (e: Event) => void;
+  deleteEvent: (id: string) => void;
+  editEvent: (e: Event) => void;
+};
+
+function Calendar(props: CalendarProps) {
+  const [map, actions] = useMap(props.events);
   const [editingEventId, setEditingEventId] = useState<string | undefined>();
   const events = Array.from(map.values());
 
-  const restructureEvent: withDragAndDropProps["onEventDrop"] = (data) => {
-    actions.set(data.event.resource, {
+  function editEvent(event: Event) {
+    actions.set(event.resource, event);
+    props.editEvent(event);
+  }
+
+  const changeEventTimes: withDragAndDropProps["onEventDrop"] = (data) => {
+    const newEvent: Event = {
       ...data.event,
       start: new Date(data.start),
       end: new Date(data.end),
-    });
+    };
+    editEvent(newEvent);
   };
 
   const handleSelectSlot = ({ start, end }: Event) => {
     const resourceId = Date.now().toString();
-    actions.set(resourceId, {
+    const newEvent = {
       start,
       end,
       title: "New Event",
       resource: resourceId,
-    });
+    };
+    actions.set(resourceId, newEvent);
+    props.addEvent(newEvent);
     setEditingEventId(resourceId);
   };
 
@@ -60,24 +63,29 @@ function Calendar() {
     setEditingEventId(event.resource);
   };
 
+  const setTitle = (newTitle: string) => {
+    if (editingEventId) {
+      const newEvent: Event = {
+        ...map.get(editingEventId),
+        title: newTitle,
+      };
+      editEvent(newEvent);
+    }
+  };
+
   return (
     <div className="App">
       {editingEventId && (
         <EditEventModal
           title={editingEventId && map.get(editingEventId)?.title}
-          setTitle={(newTitle) =>
-            editingEventId &&
-            actions.set(editingEventId, {
-              ...map.get(editingEventId),
-              title: newTitle,
-            })
-          }
+          setTitle={setTitle}
           release={() => {
             setEditingEventId(undefined);
           }}
           deleteEvent={() => {
             setEditingEventId(undefined);
             actions.remove(editingEventId);
+            props.deleteEvent(editingEventId);
           }}
         />
       )}
@@ -88,8 +96,8 @@ function Calendar() {
         localizer={localizer}
         onSelectEvent={handleSelectEvent}
         onSelectSlot={handleSelectSlot}
-        onEventDrop={restructureEvent}
-        onEventResize={restructureEvent}
+        onEventDrop={changeEventTimes}
+        onEventResize={changeEventTimes}
         resizable
         selectable
         style={{ height: "100vh" }}

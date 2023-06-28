@@ -10,8 +10,9 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id    Int     @id @default(autoincrement())
-  email String  @unique
-  name  String?
+model Event {
+  id    String    @id
+  title String
+  start DateTime?
+  end   DateTime?
 }
