@@ -1,6 +1,6 @@
 # [Video Walkthrough](https://www.loom.com/share/554e2e8de08e4f27b9aaa48e6d620189)
 
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+This is a [Next.js](https://nextjs.org/) using Typescript and Server Actions to build an interactive calendar.
 
 ## Getting Started
 
